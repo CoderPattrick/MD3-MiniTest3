@@ -135,7 +135,80 @@ from phieunhap p join chitietphieunhap c on p.id = c.id_phieunhap
                  join vattu v on c.id_vattu = v.id where v.donvitinh = 'nai'
 ;
 select * from vw_CTPNHAP_VT_loc;
+# Câu 7. Tạo view có tên vw_CTPXUAT bao gồm các thông tin sau:
+# số phiếu xuất hàng, mã vật tư, số lượng xuất, đơn giá xuất, thành tiền xuất.
+#
+create view vw_CTPXUAT as
+select p.maphieu,v.mavattu,c.soluongxuat,c.dongiaxuat, c.soluongxuat*c.dongiaxuat as 'thanhtien'
+from phieuxuat p join chitietphieuxuat c on p.id = c.id_phieuxuat
+                 join vattu v on c.id_vattu = v.id
+;
+select * from vw_CTPXUAT;
 
+# Câu 8. Tạo view có tên vw_CTPXUAT_VT bao gồm các thông tin sau:
+# số phiếu xuất hàng, mã vật tư, tên vật tư, số lượng xuất, đơn giá xuất.
+create view vw_CTPXUAT_VT as
+select p.maphieu,v.mavattu,v.tenvattu,c.soluongxuat,c.dongiaxuat, c.soluongxuat*c.dongiaxuat as 'thanhtien'
+from phieuxuat p join chitietphieuxuat c on p.id = c.id_phieuxuat
+                 join vattu v on c.id_vattu = v.id
+;
+select * from vw_CTPXUAT_VT;
+# Câu 9. Tạo view có tên vw_CTPXUAT_VT_PX bao gồm các thông tin sau:
+# số phiếu xuất hàng, tên khách hàng, mã vật tư, tên vật tư, số lượng xuất, đơn giá xuất.
+create view vw_CTPXUAT_VT_PX as
+select p.maphieu,p.tenkhachhang,v.mavattu,v.tenvattu,c.soluongxuat,c.dongiaxuat, c.soluongxuat*c.dongiaxuat as 'thanhtien'
+from phieuxuat p join chitietphieuxuat c on p.id = c.id_phieuxuat
+                 join vattu v on c.id_vattu = v.id
+;
+select * from vw_CTPXUAT_VT_PX;
+# Tạo các stored procedure sau
+# Câu 1. Tạo Stored procedure (SP) cho biết tổng số lượng cuối của vật tư
+# với mã vật tư là tham số vào.
+delimiter //
+create procedure checkvattutonkho(in mavattu int)
+begin
+    select soluongdau+tonkho.tongsoluongnhap-tonkho.tongsoluongxuat as 'tongsoluongcuoi'
+    from tonkho where id_vattu = mavattu;
+end //
+delimiter;
+call checkvattutonkho(4);
+# Câu 2. Tạo SP cho biết tổng tiền xuất của vật tư với mã vật tư là tham số vào.
+delimiter //
+create procedure checkthanhtienxuat(in mavattu nvarchar(20))
+begin
+    select sum(v.thanhtien)
+    from vw_CTPXUAT v  group by v.mavattu having v.mavattu = mavattu;
+end //
+delimiter;
+call checkthanhtienxuat('a1');
+# Câu 3. Tạo SP cho biết tổng số lượng đặt theo số đơn hàng với số đơn hàng là tham số vào.
+delimiter //
+create procedure checksoluongdattheodonhang(in madonhang nvarchar(20))
+begin
+    select d.madon,sum(c.soluongdat) from chitietdonhang c join donhang d on d.id = c.id_donhang
+    group by madon
+    having d.madon = madonhang;
+end //
+delimiter;
+call checksoluongdattheodonhang('s1');
+# Câu 4. Tạo SP dùng để thêm một đơn đặt hàng.
+delimiter //
+create procedure themdonhang(in madon1 nvarchar(20),in ngaydathang1 date,in id_nhacungcap1 int)
+begin
+    insert into donhang(madon, ngaydathang, id_nhacungcap) values (madon1,ngaydathang1,id_nhacungcap1);
+end //
+delimiter;
+call themdonhang('s4','2020-03-20',2);
+select * from donhang;
+# Câu 5. Tạo SP dùng để thêm một chi tiết đơn đặt hàng.
+delimiter //
+create procedure themchitietdonhang(in iddonhang int,in idvattu int, in soluongdat1 int)
+begin
+    insert into chitietdonhang(id_donhang, id_vattu, soluongdat) values(iddonhang,idvattu,soluongdat1);
+end //
+delimiter;
+call themchitietdonhang(3,4,3);
+select * from chitietdonhang;
 
 
 
